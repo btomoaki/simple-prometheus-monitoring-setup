@@ -125,13 +125,22 @@ http://localhost:9182/metrics
 
 ```yaml
 global:
-  scrape_interval: 15s
+  scrape_interval: 15s   # メトリクスを15秒ごとに取得する設定
 
 scrape_configs:
-  - job_name: "windows"
+  - job_name: "windows"  # ターゲットの識別名（自由につけてOK）
     static_configs:
-      - targets: ["host.docker.internal:9182"]
+      - targets: ["host.docker.internal:9182"]  # 取得先（Windowsホスト上のexporter）
 ```
+
+💡 **補足説明：**
+
+- `global.scrape_interval`: Prometheusがメトリクスを収集する間隔を設定（15秒ごとに収集）  
+- `scrape_configs`: どのターゲット（監視対象）からデータを集めるかを定義  
+- `job_name`: このターゲットのグループ名。複数ターゲットをまとめて監視するときに役立ちます  
+- `targets`: 実際の取得先アドレス。  
+  - 今回は **Dockerコンテナ内のPrometheus** から **Windowsホストのポート9182** にアクセスします。  
+  - `host.docker.internal` は「ホストマシンを指す特別なホスト名」で、Windows版Dockerで使用可能です。  
 
 ---
 
@@ -142,21 +151,35 @@ scrape_configs:
 ```yaml
 services:
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus                # Prometheus公式イメージを使用
     container_name: prometheus
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml  # 設定ファイルをマウント
     ports:
-      - "9090:9090"
+      - "9090:9090"                      # ホストの9090番ポートに公開（Prometheus UI用）
 
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana               # Grafana公式イメージ
     container_name: grafana
     ports:
-      - "3000:3000"
+      - "3000:3000"                      # ブラウザからGrafanaにアクセスするポート
     depends_on:
-      - prometheus
+      - prometheus                       # Prometheus起動後にGrafanaを立ち上げる依存関係
 ```
+
+💡 **補足説明：**
+
+- **`services:`**  
+  Docker Composeで定義するサービス群（今回は Prometheus と Grafana の2つ）  
+- **`image:`**  
+  Docker Hubから取得する公式コンテナイメージ名  
+- **`volumes:`**  
+  コンテナ内設定ファイルをホスト側ファイルで上書き（設定を簡単に編集できるように）  
+- **`ports:`**  
+  `ホスト側:コンテナ側` の形式でポート公開。  
+  例：`9090:9090` → ホストの `localhost:9090` でPrometheusのWeb UIを確認可能。  
+- **`depends_on:`**  
+  Prometheusが起動してからGrafanaを起動するよう指定（依存関係の明示）。  
 
 ---
 
@@ -220,7 +243,8 @@ docker compose down
 
 ---
 
-📘 本ドキュメントは ChatGPT (OpenAI GPT-5) の支援を受けて作成されています。
-自由に学習・再利用してください。
+📘 **リポジトリ:**  
+[btomoaki/simple-prometheus-monitoring-setup](https://github.com/btomoaki/simple-prometheus-monitoring-setup)
 
-
+ChatGPT (GPT-5) による支援を受けて作成。  
+教育・学習目的で自由に利用・再配布可能です。
